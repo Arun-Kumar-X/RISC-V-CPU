@@ -1,0 +1,30 @@
+// load_extender.v
+module load_extender (
+    input  [2:0]  funct3,
+    input  [31:0] word,
+    input  [1:0]  byte_off,
+    output reg [31:0] ext
+);
+always @(*) begin
+    case (funct3)
+        3'b000: case(byte_off) // LB
+                    2'd0: ext = {{24{word[7]}},   word[7:0]};
+                    2'd1: ext = {{24{word[15]}},  word[15:8]};
+                    2'd2: ext = {{24{word[23]}},  word[23:16]};
+                    2'd3: ext = {{24{word[31]}},  word[31:24]};
+                endcase
+        3'b001: ext = (byte_off[1]==0) ? {{16{word[15]}}, word[15:0]}   // LH
+                                       : {{16{word[31]}}, word[31:16]};
+        3'b010: ext = word;                                             // LW
+        3'b100: case(byte_off) // LBU
+                    2'd0: ext = {24'b0, word[7:0]};
+                    2'd1: ext = {24'b0, word[15:8]};
+                    2'd2: ext = {24'b0, word[23:16]};
+                    2'd3: ext = {24'b0, word[31:24]};
+                endcase
+        3'b101: ext = (byte_off[1]==0) ? {16'b0, word[15:0]}            // LHU
+                                       : {16'b0, word[31:16]};
+        default: ext = word;
+    endcase
+end
+endmodule
